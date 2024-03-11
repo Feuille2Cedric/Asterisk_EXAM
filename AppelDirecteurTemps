@@ -14,21 +14,35 @@ DepGEII=SIP/205
 ;        same => n,Dial(${Secretaire}, 10,tT)
 ;        same => n,Hangup()
 
-exten => 201.,1,GotoIfTime(09:00-19:00,mon-fri,*,jan,feb,mar,apr,may,jun,jul,sep,oct,nov,dec?directeu>
+exten => 201.,1,GotoIfTime(09:00-19:00,mon-fri,*,jan,feb,mar,apr,may,jun,jul,sep,oct,nov,dec?directeur,restriction)
 exten => 201.,n(directeur),Dial(${Directeur},20)
 exten => 201.,n(restriction),Playback(restricted)
 exten => 201.,n,Hangup()
 
-exten => _X.,1,GotoIfTime(09:00-19:00,mon-fri,*,jan,feb,mar,apr,may,jun,jul,sep,oct,nov,dec?personnel>
-exten => _X.,n(personnel),GotoIf(${REGEX("^0[1-9][0-9]{8}$" ${EXTEN})}?dial:restriction) ; Regex pour>
-exten => _X.,n(dial),Dial(SIP/${EXTEN},20)
-exten => _X.,n(restriction),Playback(restricted)
-exten => _X.,n,Hangup()
-
+exten => _2XX,1,Goto(interne,${EXTEN},1) ; Redirection des appels internes
+exten => _0X.,1,Goto(externe,${EXTEN},1) ; Redirection des appels externes
 
 exten => 2600,1,Dial(local/s1@double&local/s2@double,30)
+
 
 [double]
 exten => s1,1,Dial(SIP/201,20)
 exten => s2,1,Wait(10)
 same => n,Dial(SIP/202,20)
+
+
+[interne]
+; Exemples d'extensions pour les appels internes
+exten => _2XX.,1,GotoIfTime(09:00-19:00,mon-fri,*,jan,feb,mar,apr,may,jun,jul,sep,oct,nov,dec?personnel:restriction)
+exten => _2XX.,n(personnel),Dial(SIP/${EXTEN},20)
+exten => _2XX.,n(restriction),Playback(restricted)
+exten => _2XX.,n,Hangup()
+
+
+[externe]
+; Exemples d'extensions pour les appels internes
+exten => _X.,1,GotoIfTime(09:00-19:00,mon-fri,*,jan,feb,mar,apr,may,jun,jul,sep,oct,nov,dec?personnel:restriction)
+exten => _X.,n(personnel),GotoIf(${REGEX("^0[1-5,8-9][0-9]{8}$" ${EXTEN})}?dial:restriction)
+exten => _X.,n(dial),Dial(SIP/${EXTEN},20)
+exten => _X.,n(restriction),Playback(restricted)
+exten => _X.,n,Hangup()
